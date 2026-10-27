@@ -1,0 +1,48 @@
+
+==================== PHASE 1: LEXICAL ANALYSIS ====================
+  Line  Category     Lexeme
+  1     KEYWORD      int
+  1     IDENTIFIER   main
+  1     SEPARATOR    (
+  1     SEPARATOR    )
+  1     SEPARATOR    {
+  2     KEYWORD      float
+  2     IDENTIFIER   f
+  2     SEPARATOR    ;
+  3     IDENTIFIER   f
+  3     OPERATOR     =
+  3     FLOAT_CONST  2.5
+  3     SEPARATOR    ;
+  4     KEYWORD      return
+  4     IDENTIFIER   f
+  4     SEPARATOR    ;
+  5     SEPARATOR    }
+  6     END          EOF
+
+==================== PHASE 2: SYNTAX ANALYSIS (AST) ====================
+  `-- Program
+      `-- Function main
+          `-- Block
+              |-- Declaration float
+              |   `-- Id f  : float
+              |-- Assign  : float
+              |   |-- Id f  : float
+              |   `-- Num 2.5  : float
+              `-- Return
+                  `-- Id f  : float
+
+==================== PHASE 3: SEMANTIC ANALYSIS (SYMBOL TABLE) ====================
+  Name         Type   Size  Offset  Scope  Line
+  f            float  4     0       1      2
+
+==================== PHASE 4: INTERMEDIATE CODE (QUADRUPLES) ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+
+==================== PHASE 5: OPTIMIZED CODE ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+
+==================== ERRORS ====================
+  [Semantic] line 4: type mismatch: main() must return int, not float
+  1 error(s)
+
+Report written to report.html - open it in a browser.

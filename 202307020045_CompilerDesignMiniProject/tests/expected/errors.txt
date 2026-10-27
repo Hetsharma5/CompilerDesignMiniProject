@@ -1,0 +1,83 @@
+
+==================== PHASE 1: LEXICAL ANALYSIS ====================
+  Line  Category     Lexeme
+  2     KEYWORD      int
+  2     IDENTIFIER   x
+  2     SEPARATOR    ,
+  2     IDENTIFIER   y
+  2     SEPARATOR    ;
+  3     KEYWORD      float
+  3     IDENTIFIER   f
+  3     SEPARATOR    ;
+  5     IDENTIFIER   x
+  5     OPERATOR     =
+  5     INT_CONST    10
+  5     INT_CONST    2
+  5     SEPARATOR    ;
+  6     IDENTIFIER   y
+  6     OPERATOR     =
+  6     SEPARATOR    (
+  6     IDENTIFIER   x
+  6     OPERATOR     +
+  6     INT_CONST    3
+  6     SEPARATOR    ;
+  7     KEYWORD      if
+  7     IDENTIFIER   x
+  7     OPERATOR     >
+  7     INT_CONST    2
+  7     SEPARATOR    {
+  7     IDENTIFIER   y
+  7     OPERATOR     =
+  7     INT_CONST    1
+  7     SEPARATOR    ;
+  7     SEPARATOR    }
+  8     IDENTIFIER   y
+  8     OPERATOR     =
+  8     INT_CONST    2
+  8     SEPARATOR    ;
+  9     END          EOF
+
+==================== PHASE 2: SYNTAX ANALYSIS (AST) ====================
+  `-- Program
+      |-- Declaration int
+      |   |-- Id x
+      |   `-- Id y
+      |-- Declaration float
+      |   `-- Id f
+      |-- Assign
+      |   |-- Id x
+      |   `-- Num 10
+      |-- Assign
+      |   |-- Id y
+      |   `-- BinOp +
+      |       |-- Id x
+      |       `-- Num 3
+      |-- If
+      |   |-- BinOp >
+      |   |   |-- Id x
+      |   |   `-- Num 2
+      |   `-- Block
+      |       `-- Assign
+      |           |-- Id y
+      |           `-- Num 1
+      `-- Assign
+          |-- Id y
+          `-- Num 2
+
+==================== PHASE 3: SEMANTIC ANALYSIS (SYMBOL TABLE) ====================
+  Name         Type   Size  Offset  Scope  Line
+
+==================== PHASE 4: INTERMEDIATE CODE (QUADRUPLES) ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+
+==================== PHASE 5: OPTIMIZED CODE ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+
+==================== ERRORS ====================
+  [Lexical] line 5: unknown character '@'
+  [Syntax] line 5: expected ';' but found '2'
+  [Syntax] line 6: expected ')' but found ';'
+  [Syntax] line 7: expected '(' but found 'x'
+  4 error(s)
+
+Report written to report.html - open it in a browser.

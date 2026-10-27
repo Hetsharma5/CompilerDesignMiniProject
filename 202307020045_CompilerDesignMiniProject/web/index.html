@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mini Compiler Playground</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1d2433; --mute:#667085; --line:#e3e6ea;
+          --ok:#12805c; --bad:#c4320a; --acc:#3557d4; --run:#c27c0e; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12151b; --card:#1b2029; --ink:#e6e9ef; --mute:#98a2b3; --line:#2c3340;
+            --ok:#3ccf91; --bad:#ff7a59; --acc:#8fa8ff; --run:#f5b942; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, "Segoe UI", sans-serif;
+         display: flex; flex-direction: column; }
+
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 12px 16px;
+           border-bottom: 1px solid var(--line); background: var(--card); }
+  h1 { font-size: 18px; margin: 0; }
+  .controls { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+  select, button { font: inherit; border-radius: 8px; border: 1px solid var(--line);
+                   background: var(--bg); color: var(--ink); padding: 6px 10px; }
+  button.go { background: var(--acc); color: var(--bg); border-color: var(--acc); font-weight: 600; padding: 6px 16px; cursor: pointer; }
+  button.go:disabled { opacity: .6; cursor: wait; }
+  kbd { font-size: 12px; color: var(--mute); }
+
+  /* phase lights */
+  .pipe { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { font-size: 13px; padding: 3px 10px; border-radius: 999px; border: 1.5px solid var(--line);
+          color: var(--mute); transition: all .15s; }
+  .chip.run  { border-color: var(--run); background: var(--run); color: var(--bg); }
+  .chip.ok   { border-color: var(--ok);  color: var(--ok); }
+  .chip.bad  { border-color: var(--bad); color: var(--bad); }
+  .chip.skip { border-style: dashed; }
+  .arrow { color: var(--mute); font-size: 12px; }
+
+  main { flex: 1; display: grid; grid-template-columns: minmax(300px, 2fr) 3fr; min-height: 0; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; grid-template-rows: 50vh 80vh; } }
+
+  .editor { display: flex; min-height: 0; border-right: 1px solid var(--line); background: var(--card); }
+  .gutter, textarea { font: 14px/1.6 Consolas, ui-monospace, monospace; padding: 12px 8px; margin: 0; }
+  .gutter { color: var(--mute); text-align: right; user-select: none; overflow: hidden;
+            border-right: 1px solid var(--line); min-width: 3em; white-space: pre; }
+  textarea { flex: 1; border: 0; resize: none; outline: none; background: transparent; color: var(--ink);
+             white-space: pre; overflow: auto; tab-size: 4; }
+
+  .output { position: relative; min-height: 0; }
+  iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .placeholder { position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
+                 color: var(--mute); padding: 16px; }
+  .placeholder[hidden] { display: none; }
+
+  @media (prefers-reduced-motion: reduce) { .chip { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Mini Compiler Playground</h1>
+  <div class="pipe" id="pipe" aria-label="Compiler phases"></div>
+  <div class="controls">
+    <select id="sample" aria-label="Load a sample program">
+      <option value="">Load sample…</option>
+      <option value="examples/demo.mc">Demo (no errors)</option>
+      <option value="examples/main.mc">With int main()</option>
+      <option value="examples/errors.mc">Lexical + syntax errors</option>
+      <option value="examples/semantic.mc">Semantic errors</option>
+      <option value="tests/optimizer.mc">Optimizer tricks</option>
+    </select>
+    <button class="go" id="go">Compile ▶</button>
+    <kbd>Ctrl+Enter</kbd>
+  </div>
+</header>
+
+<main>
+  <div class="editor">
+    <div class="gutter" id="gutter" aria-hidden="true">1</div>
+    <textarea id="code" spellcheck="false" aria-label="Source code">int a, b;
+float avg;
+
+a = 5;
+b = a * 2 + 3;
+
+if (b > 10) {
+    a = b - a;
+} else {
+    a = 0;
+}
+
+avg = (a + b) / 2.0;
+</textarea>
+  </div>
+  <div class="output">
+    <div class="placeholder" id="placeholder"><p>Write a program on the left and press <b>Compile</b>.<br>Every compiler phase will show up here.</p></div>
+    <iframe id="report" title="Compiler report"></iframe>
+  </div>
+</main>
+
+<script>
+const PHASES = ["Lexer", "Parser", "Semantic", "Intermediate code", "Optimizer"];
+const pipe = document.getElementById("pipe");
+const code = document.getElementById("code");
+const gutter = document.getElementById("gutter");
+const go = document.getElementById("go");
+const report = document.getElementById("report");
+
+PHASES.forEach((name, i) => {
+  if (i) pipe.insertAdjacentHTML("beforeend", '<span class="arrow">→</span>');
+  pipe.insertAdjacentHTML("beforeend", `<span class="chip">${name}</span>`);
+});
+const chips = [...pipe.querySelectorAll(".chip")];
+
+function updateGutter() {
+  const lines = code.value.split("\n").length;
+  gutter.textContent = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
+}
+code.addEventListener("input", updateGutter);
+code.addEventListener("scroll", () => { gutter.scrollTop = code.scrollTop; });
+code.addEventListener("keydown", e => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); compile(); }
+  else if (e.key === "Tab") {   // insert spaces instead of leaving the editor
+    e.preventDefault();
+    code.setRangeText("    ", code.selectionStart, code.selectionEnd, "end");
+    updateGutter();
+  }
+});
+updateGutter();
+
+document.getElementById("sample").addEventListener("change", async e => {
+  if (!e.target.value) return;
+  code.value = await (await fetch("/" + e.target.value)).text();
+  e.target.value = "";
+  updateGutter();
+  compile();
+});
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+async function compile() {
+  go.disabled = true;
+  chips.forEach(c => c.className = "chip");
+  const request = fetch("/compile", { method: "POST", body: code.value });
+
+  // light each phase in turn while the C compiler runs
+  for (const chip of chips) {
+    chip.classList.add("run");
+    if (!reduced) await sleep(180);
+    chip.classList.remove("run");
+  }
+
+  try {
+    const res = await request;
+    const html = await res.text();
+    if (!res.ok) throw new Error(`server said ${res.status}`);
+    // copy each phase's ok / bad / skip status from the report's banner
+    const stages = new DOMParser().parseFromString(html, "text/html").querySelectorAll(".stage");
+    stages.forEach((s, i) => chips[i] && chips[i].classList.add(["ok", "bad", "skip"].find(c => s.classList.contains(c))));
+    report.srcdoc = html;
+    document.getElementById("placeholder").hidden = true;
+  } catch (err) {
+    report.srcdoc = `<p style="font:15px system-ui;padding:16px;color:#c4320a">Could not compile: ${err.message}.<br>Is <code>python server.py</code> still running?</p>`;
+    document.getElementById("placeholder").hidden = true;
+  }
+  go.disabled = false;
+}
+go.addEventListener("click", compile);
+</script>
+</body>
+</html>

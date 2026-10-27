@@ -1,0 +1,98 @@
+
+==================== PHASE 1: LEXICAL ANALYSIS ====================
+  Line  Category     Lexeme
+  2     KEYWORD      int
+  2     IDENTIFIER   x
+  2     SEPARATOR    ,
+  2     IDENTIFIER   y
+  2     SEPARATOR    ;
+  3     KEYWORD      float
+  3     IDENTIFIER   f
+  3     SEPARATOR    ;
+  4     KEYWORD      int
+  4     IDENTIFIER   x
+  4     SEPARATOR    ;
+  6     IDENTIFIER   f
+  6     OPERATOR     =
+  6     FLOAT_CONST  2.5
+  6     SEPARATOR    ;
+  7     IDENTIFIER   x
+  7     OPERATOR     =
+  7     IDENTIFIER   f
+  7     OPERATOR     *
+  7     INT_CONST    2
+  7     SEPARATOR    ;
+  8     IDENTIFIER   y
+  8     OPERATOR     =
+  8     IDENTIFIER   f
+  8     OPERATOR     %
+  8     INT_CONST    2
+  8     SEPARATOR    ;
+  9     IDENTIFIER   z
+  9     OPERATOR     =
+  9     INT_CONST    4
+  9     SEPARATOR    ;
+  10    SEPARATOR    {
+  11    KEYWORD      int
+  11    IDENTIFIER   y
+  11    SEPARATOR    ;
+  12    IDENTIFIER   y
+  12    OPERATOR     =
+  12    IDENTIFIER   x
+  12    SEPARATOR    ;
+  13    SEPARATOR    }
+  14    END          EOF
+
+==================== PHASE 2: SYNTAX ANALYSIS (AST) ====================
+  `-- Program
+      |-- Declaration int
+      |   |-- Id x  : int
+      |   `-- Id y  : int
+      |-- Declaration float
+      |   `-- Id f  : float
+      |-- Declaration int
+      |   `-- Id x
+      |-- Assign  : float
+      |   |-- Id f  : float
+      |   `-- Num 2.5  : float
+      |-- Assign  : int
+      |   |-- Id x  : int
+      |   `-- BinOp *  : float
+      |       |-- Id f  : float
+      |       `-- Num 2  : int
+      |-- Assign  : int
+      |   |-- Id y  : int
+      |   `-- BinOp %  : error
+      |       |-- Id f  : float
+      |       `-- Num 2  : int
+      |-- Assign  : error
+      |   |-- Id z  : error
+      |   `-- Num 4  : int
+      `-- Block
+          |-- Declaration int
+          |   `-- Id y  : int
+          `-- Assign  : int
+              |-- Id y  : int
+              `-- Id x  : int
+
+==================== PHASE 3: SEMANTIC ANALYSIS (SYMBOL TABLE) ====================
+  Name         Type   Size  Offset  Scope  Line
+  x            int    4     0       0      2
+  y            int    4     4       0      2
+  f            float  4     8       0      3
+  y            int    4     12      1      11
+
+==================== PHASE 4: INTERMEDIATE CODE (QUADRUPLES) ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+
+==================== PHASE 5: OPTIMIZED CODE ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+
+==================== ERRORS ====================
+  [Semantic] line 4: redeclaration of 'x' (first declared on line 2)
+  [Semantic] line 7: type mismatch: cannot assign float to int variable 'x'
+  [Semantic] line 8: operator '%' needs int operands, got float % int
+  [Semantic] line 9: undeclared variable 'z'
+  4 error(s)
+
+Report written to report.html - open it in a browser.

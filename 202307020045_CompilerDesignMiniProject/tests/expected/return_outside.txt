@@ -1,0 +1,40 @@
+
+==================== PHASE 1: LEXICAL ANALYSIS ====================
+  Line  Category     Lexeme
+  2     KEYWORD      int
+  2     IDENTIFIER   x
+  2     SEPARATOR    ;
+  3     IDENTIFIER   x
+  3     OPERATOR     =
+  3     INT_CONST    1
+  3     SEPARATOR    ;
+  4     KEYWORD      return
+  4     IDENTIFIER   x
+  4     SEPARATOR    ;
+  5     END          EOF
+
+==================== PHASE 2: SYNTAX ANALYSIS (AST) ====================
+  `-- Program
+      |-- Declaration int
+      |   `-- Id x  : int
+      |-- Assign  : int
+      |   |-- Id x  : int
+      |   `-- Num 1  : int
+      `-- Return
+          `-- Id x  : int
+
+==================== PHASE 3: SEMANTIC ANALYSIS (SYMBOL TABLE) ====================
+  Name         Type   Size  Offset  Scope  Line
+  x            int    4     0       0      2
+
+==================== PHASE 4: INTERMEDIATE CODE (QUADRUPLES) ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+
+==================== PHASE 5: OPTIMIZED CODE ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+
+==================== ERRORS ====================
+  [Semantic] line 4: 'return' used outside of main()
+  1 error(s)
+
+Report written to report.html - open it in a browser.

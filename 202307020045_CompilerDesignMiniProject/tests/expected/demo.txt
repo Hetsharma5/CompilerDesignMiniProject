@@ -1,0 +1,269 @@
+
+==================== PHASE 1: LEXICAL ANALYSIS ====================
+  Line  Category     Lexeme
+  2     KEYWORD      int
+  2     IDENTIFIER   a
+  2     SEPARATOR    ,
+  2     IDENTIFIER   b
+  2     SEPARATOR    ,
+  2     IDENTIFIER   c
+  2     SEPARATOR    ,
+  2     IDENTIFIER   i
+  2     SEPARATOR    ;
+  3     KEYWORD      float
+  3     IDENTIFIER   avg
+  3     SEPARATOR    ;
+  5     IDENTIFIER   a
+  5     OPERATOR     =
+  5     INT_CONST    5
+  5     SEPARATOR    ;
+  6     IDENTIFIER   b
+  6     OPERATOR     =
+  6     IDENTIFIER   a
+  6     OPERATOR     *
+  6     INT_CONST    2
+  6     OPERATOR     +
+  6     INT_CONST    3
+  6     SEPARATOR    ;
+  8     KEYWORD      if
+  8     SEPARATOR    (
+  8     IDENTIFIER   b
+  8     OPERATOR     >
+  8     INT_CONST    10
+  8     SEPARATOR    )
+  8     SEPARATOR    {
+  9     IDENTIFIER   c
+  9     OPERATOR     =
+  9     IDENTIFIER   b
+  9     OPERATOR     -
+  9     IDENTIFIER   a
+  9     SEPARATOR    ;
+  10    SEPARATOR    }
+  10    KEYWORD      else
+  10    SEPARATOR    {
+  11    IDENTIFIER   c
+  11    OPERATOR     =
+  11    INT_CONST    0
+  11    SEPARATOR    ;
+  12    SEPARATOR    }
+  14    KEYWORD      while
+  14    SEPARATOR    (
+  14    IDENTIFIER   a
+  14    OPERATOR     <
+  14    INT_CONST    10
+  14    SEPARATOR    )
+  14    SEPARATOR    {
+  15    IDENTIFIER   a
+  15    OPERATOR     =
+  15    IDENTIFIER   a
+  15    OPERATOR     +
+  15    INT_CONST    1
+  15    SEPARATOR    ;
+  16    SEPARATOR    }
+  18    KEYWORD      for
+  18    SEPARATOR    (
+  18    IDENTIFIER   i
+  18    OPERATOR     =
+  18    INT_CONST    0
+  18    SEPARATOR    ;
+  18    IDENTIFIER   i
+  18    OPERATOR     <
+  18    INT_CONST    3
+  18    SEPARATOR    ;
+  18    IDENTIFIER   i
+  18    OPERATOR     =
+  18    IDENTIFIER   i
+  18    OPERATOR     +
+  18    INT_CONST    1
+  18    SEPARATOR    )
+  18    SEPARATOR    {
+  19    KEYWORD      int
+  19    IDENTIFIER   sq
+  19    SEPARATOR    ;
+  20    IDENTIFIER   sq
+  20    OPERATOR     =
+  20    IDENTIFIER   i
+  20    OPERATOR     *
+  20    IDENTIFIER   i
+  20    SEPARATOR    ;
+  21    IDENTIFIER   c
+  21    OPERATOR     =
+  21    IDENTIFIER   c
+  21    OPERATOR     +
+  21    IDENTIFIER   sq
+  21    SEPARATOR    ;
+  22    SEPARATOR    }
+  24    IDENTIFIER   avg
+  24    OPERATOR     =
+  24    SEPARATOR    (
+  24    IDENTIFIER   a
+  24    OPERATOR     +
+  24    IDENTIFIER   b
+  24    SEPARATOR    )
+  24    OPERATOR     /
+  24    FLOAT_CONST  2.0
+  24    SEPARATOR    ;
+  25    END          EOF
+
+==================== PHASE 2: SYNTAX ANALYSIS (AST) ====================
+  `-- Program
+      |-- Declaration int
+      |   |-- Id a  : int
+      |   |-- Id b  : int
+      |   |-- Id c  : int
+      |   `-- Id i  : int
+      |-- Declaration float
+      |   `-- Id avg  : float
+      |-- Assign  : int
+      |   |-- Id a  : int
+      |   `-- Num 5  : int
+      |-- Assign  : int
+      |   |-- Id b  : int
+      |   `-- BinOp +  : int
+      |       |-- BinOp *  : int
+      |       |   |-- Id a  : int
+      |       |   `-- Num 2  : int
+      |       `-- Num 3  : int
+      |-- If
+      |   |-- BinOp >  : int
+      |   |   |-- Id b  : int
+      |   |   `-- Num 10  : int
+      |   |-- Block
+      |   |   `-- Assign  : int
+      |   |       |-- Id c  : int
+      |   |       `-- BinOp -  : int
+      |   |           |-- Id b  : int
+      |   |           `-- Id a  : int
+      |   `-- Block
+      |       `-- Assign  : int
+      |           |-- Id c  : int
+      |           `-- Num 0  : int
+      |-- While
+      |   |-- BinOp <  : int
+      |   |   |-- Id a  : int
+      |   |   `-- Num 10  : int
+      |   `-- Block
+      |       `-- Assign  : int
+      |           |-- Id a  : int
+      |           `-- BinOp +  : int
+      |               |-- Id a  : int
+      |               `-- Num 1  : int
+      |-- For
+      |   |-- Assign  : int
+      |   |   |-- Id i  : int
+      |   |   `-- Num 0  : int
+      |   |-- BinOp <  : int
+      |   |   |-- Id i  : int
+      |   |   `-- Num 3  : int
+      |   |-- Assign  : int
+      |   |   |-- Id i  : int
+      |   |   `-- BinOp +  : int
+      |   |       |-- Id i  : int
+      |   |       `-- Num 1  : int
+      |   `-- Block
+      |       |-- Declaration int
+      |       |   `-- Id sq  : int
+      |       |-- Assign  : int
+      |       |   |-- Id sq  : int
+      |       |   `-- BinOp *  : int
+      |       |       |-- Id i  : int
+      |       |       `-- Id i  : int
+      |       `-- Assign  : int
+      |           |-- Id c  : int
+      |           `-- BinOp +  : int
+      |               |-- Id c  : int
+      |               `-- Id sq  : int
+      `-- Assign  : float
+          |-- Id avg  : float
+          `-- BinOp /  : float
+              |-- BinOp +  : int
+              |   |-- Id a  : int
+              |   `-- Id b  : int
+              `-- Num 2.0  : float
+
+==================== PHASE 3: SEMANTIC ANALYSIS (SYMBOL TABLE) ====================
+  Name         Type   Size  Offset  Scope  Line
+  a            int    4     0       0      2
+  b            int    4     4       0      2
+  c            int    4     8       0      2
+  i            int    4     12      0      2
+  avg          float  4     16      0      3
+  sq           int    4     20      1      19
+
+==================== PHASE 4: INTERMEDIATE CODE (QUADRUPLES) ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+  0        a = 5                            | =        5                 a       
+  1        t1 = a * 2                       | *        a        2        t1      
+  2        t2 = t1 + 3                      | +        t1       3        t2      
+  3        b = t2                           | =        t2                b       
+  4        t3 = b > 10                      | >        b        10       t3      
+  5        ifFalse t3 goto L1               | iffalse  t3                L1      
+  6        t4 = b - a                       | -        b        a        t4      
+  7        c = t4                           | =        t4                c       
+  8        goto L2                          | goto                       L2      
+  9    L1:                                  | label                      L1      
+  10       c = 0                            | =        0                 c       
+  11   L2:                                  | label                      L2      
+  12   L3:                                  | label                      L3      
+  13       t5 = a < 10                      | <        a        10       t5      
+  14       ifFalse t5 goto L4               | iffalse  t5                L4      
+  15       t6 = a + 1                       | +        a        1        t6      
+  16       a = t6                           | =        t6                a       
+  17       goto L3                          | goto                       L3      
+  18   L4:                                  | label                      L4      
+  19       i = 0                            | =        0                 i       
+  20   L5:                                  | label                      L5      
+  21       t7 = i < 3                       | <        i        3        t7      
+  22       ifFalse t7 goto L6               | iffalse  t7                L6      
+  23       t8 = i * i                       | *        i        i        t8      
+  24       sq = t8                          | =        t8                sq      
+  25       t9 = c + sq                      | +        c        sq       t9      
+  26       c = t9                           | =        t9                c       
+  27       t10 = i + 1                      | +        i        1        t10     
+  28       i = t10                          | =        t10               i       
+  29       goto L5                          | goto                       L5      
+  30   L6:                                  | label                      L6      
+  31       t11 = a + b                      | +        a        b        t11     
+  32       t12 = (float) t11                | itof     t11               t12     
+  33       t13 = t12 / 2.0                  | /        t12      2.0      t13     
+  34       avg = t13                        | =        t13               avg     
+
+==================== PHASE 5: OPTIMIZED CODE ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+  0        a = 5                            | =        5                 a       
+  1        b = 13                           | =        13                b       
+  2        c = 8                            | =        8                 c       
+  3        goto L2                          | goto                       L2      
+  4    L1:                                  | label                      L1      
+  5        c = 0                            | =        0                 c       
+  6    L2:                                  | label                      L2      
+  7    L3:                                  | label                      L3      
+  8        t5 = a < 10                      | <        a        10       t5      
+  9        ifFalse t5 goto L4               | iffalse  t5                L4      
+  10       t6 = a + 1                       | +        a        1        t6      
+  11       a = t6                           | =        t6                a       
+  12       goto L3                          | goto                       L3      
+  13   L4:                                  | label                      L4      
+  14       i = 0                            | =        0                 i       
+  15   L5:                                  | label                      L5      
+  16       t7 = i < 3                       | <        i        3        t7      
+  17       ifFalse t7 goto L6               | iffalse  t7                L6      
+  18       t8 = i * i                       | *        i        i        t8      
+  19       sq = t8                          | =        t8                sq      
+  20       t9 = c + sq                      | +        c        sq       t9      
+  21       c = t9                           | =        t9                c       
+  22       t10 = i + 1                      | +        i        1        t10     
+  23       i = t10                          | =        t10               i       
+  24       goto L5                          | goto                       L5      
+  25   L6:                                  | label                      L6      
+  26       t11 = a + b                      | +        a        b        t11     
+  27       t12 = (float) t11                | itof     t11               t12     
+  28       t13 = t12 / 2.0                  | /        t12      2.0      t13     
+  29       avg = t13                        | =        t13               avg     
+
+  35 instructions -> 30 instructions
+
+==================== ERRORS ====================
+  0 error(s)
+
+Report written to report.html - open it in a browser.

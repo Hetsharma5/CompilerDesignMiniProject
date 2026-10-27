@@ -1,0 +1,70 @@
+
+==================== PHASE 1: LEXICAL ANALYSIS ====================
+  Line  Category     Lexeme
+  1     KEYWORD      int
+  1     IDENTIFIER   x
+  1     SEPARATOR    ;
+  2     IDENTIFIER   x
+  2     OPERATOR     =
+  2     INT_CONST    1
+  2     SEPARATOR    ;
+  3     SEPARATOR    {
+  4     KEYWORD      float
+  4     IDENTIFIER   x
+  4     SEPARATOR    ;
+  5     IDENTIFIER   x
+  5     OPERATOR     =
+  5     FLOAT_CONST  2.5
+  5     SEPARATOR    ;
+  6     SEPARATOR    }
+  7     IDENTIFIER   x
+  7     OPERATOR     =
+  7     IDENTIFIER   x
+  7     OPERATOR     +
+  7     INT_CONST    1
+  7     SEPARATOR    ;
+  8     END          EOF
+
+==================== PHASE 2: SYNTAX ANALYSIS (AST) ====================
+  `-- Program
+      |-- Declaration int
+      |   `-- Id x  : int
+      |-- Assign  : int
+      |   |-- Id x  : int
+      |   `-- Num 1  : int
+      |-- Block
+      |   |-- Declaration float
+      |   |   `-- Id x  : float
+      |   `-- Assign  : float
+      |       |-- Id x  : float
+      |       `-- Num 2.5  : float
+      `-- Assign  : int
+          |-- Id x  : int
+          `-- BinOp +  : int
+              |-- Id x  : int
+              `-- Num 1  : int
+
+==================== PHASE 3: SEMANTIC ANALYSIS (SYMBOL TABLE) ====================
+  Name         Type   Size  Offset  Scope  Line
+  x            int    4     0       0      1
+  x            float  4     4       1      4
+
+==================== PHASE 4: INTERMEDIATE CODE (QUADRUPLES) ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+  0        x = 1                            | =        1                 x       
+  1        x.1 = 2.5                        | =        2.5               x.1     
+  2        t1 = x + 1                       | +        x        1        t1      
+  3        x = t1                           | =        t1                x       
+
+==================== PHASE 5: OPTIMIZED CODE ====================
+  #    Three Address Code                   | op       arg1     arg2     result  
+  0        x = 1                            | =        1                 x       
+  1        x.1 = 2.5                        | =        2.5               x.1     
+  2        x = 2                            | =        2                 x       
+
+  4 instructions -> 3 instructions
+
+==================== ERRORS ====================
+  0 error(s)
+
+Report written to report.html - open it in a browser.
