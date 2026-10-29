@@ -7,6 +7,7 @@ to a temp folder, runs minicc.exe there, and sends back the report.html it write
 The compiling itself is all done by the C program.
 """
 import http.server
+import os
 import pathlib
 import subprocess
 import sys
@@ -15,7 +16,8 @@ import webbrowser
 
 ROOT = pathlib.Path(__file__).resolve().parent
 EXE = ROOT / "minicc.exe"
-PORT = 8000
+PORT = int(os.environ.get("PORT", 8000))
+HOST = "0.0.0.0" if "PORT" in os.environ else "127.0.0.1"  # hosting sites (Render) set PORT
 MAX_SOURCE = 100_000  # bytes
 
 
@@ -43,6 +45,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 subprocess.run([str(EXE), "input.mc"], cwd=tmp, capture_output=True, timeout=5)
             except subprocess.TimeoutExpired:
                 return self.send_error(504, "compiler took too long")
+            if not (tmp / "report.html").exists():
+                return self.send_error(500, "compiler crashed on this program")
             report = (tmp / "report.html").read_bytes()
 
         self.send_response(200)
@@ -55,7 +59,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     if not EXE.exists():
         sys.exit("minicc.exe not found - run build.bat first")
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+    server = http.server.ThreadingHTTPServer((HOST, PORT), Handler)
     url = f"http://localhost:{PORT}"
     print(f"Mini compiler playground running at {url}  (Ctrl+C to stop)")
     webbrowser.open(url)
