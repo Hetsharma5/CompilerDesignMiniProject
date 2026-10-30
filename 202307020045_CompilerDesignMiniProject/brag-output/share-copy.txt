@@ -1,0 +1,1 @@
+One line of code, `b = a * 2 + 3;`, followed through all five phases of a compiler: tokens, syntax tree, symbol table, three-address code, and an optimizer that folds it down to `b = 13`. We wrote the whole mini compiler in C, and it shows its work at every step.

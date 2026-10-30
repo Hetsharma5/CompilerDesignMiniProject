@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Mini Compiler video</title>
+<style>
+:root{--bg:#12151b;--card:#1b2029;--card2:#202633;--ink:#e6e9ef;--mute:#98a2b3;--line:#2c3340;
+  --ok:#3ccf91;--bad:#ff7a59;--acc:#8fa8ff;--run:#f5b942;--kw:#b98af0;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI",system-ui,sans-serif;}
+.mono{font-family:Consolas,ui-monospace,monospace}
+#stage{position:absolute;inset:0;overflow:hidden}
+#bg{position:absolute;inset:-200px;background-image:radial-gradient(circle,#2a3140 1.4px,transparent 1.6px);background-size:44px 44px;opacity:.55}
+#glow{position:absolute;width:1400px;height:1400px;border-radius:50%;filter:blur(40px);opacity:.22}
+.scene{position:absolute;inset:0;opacity:0}
+.abs{position:absolute}
+.center{left:0;right:0;text-align:center}
+.cap{font-size:44px;font-weight:600;color:var(--ink)}
+.capm{font-size:38px;color:var(--mute)}
+.code{font-family:Consolas,monospace;font-size:120px;letter-spacing:2px;white-space:pre}
+.caret{display:inline-block;width:8px;height:120px;background:var(--acc);vertical-align:-18px;margin-left:6px}
+
+/* top pipeline bar (same chips as web/index.html) */
+#bar{position:absolute;left:0;right:0;top:0;height:96px;display:flex;align-items:center;gap:26px;padding:0 64px;
+  background:rgba(27,32,41,.85);border-bottom:1px solid var(--line);opacity:0}
+#bar h1{font-size:24px;font-weight:700;letter-spacing:.5px;margin-right:18px}
+#pipe{display:flex;align-items:center;gap:12px;position:relative}
+.chip{position:relative;z-index:1;font-size:22px;padding:6px 20px;border-radius:999px;border:2px solid var(--line);color:var(--mute);white-space:nowrap}
+.chip.ok{border-color:var(--ok);color:var(--ok)}
+.chip.run{color:var(--bg);border-color:transparent;font-weight:600}
+.arrow{color:var(--mute);font-size:20px}
+#pill{position:absolute;top:0;height:100%;border-radius:999px;background:var(--run);z-index:0}
+
+.hdr{position:absolute;left:120px;top:150px}
+.hdr .num{font-family:Consolas,monospace;font-size:30px;font-weight:700;letter-spacing:3px}
+.hdr .t{font-size:64px;font-weight:700;line-height:1.1;margin-top:4px}
+.hdr .s{font-size:34px;color:var(--mute);margin-top:10px}
+
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:18px}
+.tok{position:absolute;top:0;width:196px;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.tok .lx{font-family:Consolas,monospace;font-size:54px;font-weight:700}
+.tok .cat{font-family:Consolas,monospace;font-size:19px;letter-spacing:1px;color:var(--mute)}
+.pill2{display:inline-block;font-size:26px;padding:8px 20px;border-radius:12px;margin-right:14px}
+.bad{background:#3a1d17;color:var(--bad);border:1.5px solid #6b3022}
+.okp{background:#143428;color:var(--ok);border:1.5px solid #1f5a43}
+
+.pcard{position:absolute;top:0;width:300px;height:250px;padding:26px 24px;display:flex;flex-direction:column;gap:12px}
+.pcard .n{font-family:Consolas,monospace;font-size:24px;color:var(--mute);font-weight:700}
+.pcard .nm{font-size:36px;font-weight:700;line-height:1.1}
+.pcard .io{font-family:Consolas,monospace;font-size:22px;color:var(--mute);margin-top:auto}
+
+svg text{font-family:Consolas,monospace}
+table.sym{border-collapse:collapse;font-family:Consolas,monospace;font-size:30px}
+table.sym th{color:var(--mute);font-weight:600;text-align:left;padding:10px 26px;border-bottom:1.5px solid var(--line);font-size:24px}
+table.sym td{padding:10px 26px;border-bottom:1px solid var(--line)}
+.tac{font-family:Consolas,monospace;font-size:46px;white-space:pre}
+.tline{height:72px;line-height:72px;overflow:hidden;position:relative}
+.small{font-size:28px;color:var(--mute)}
+.hl{border-radius:8px;padding:0 6px}
+.kw{color:var(--kw)}.id{color:var(--acc)}.op{color:var(--run)}.num{color:var(--ok)}.sep{color:var(--mute)}
+</style></head>
+<body><div id="stage">
+<div id="bg"></div><div id="glow"></div>
+
+<!-- S1 hook -->
+<section class="scene" id="s1">
+  <div class="abs center cap" id="s1a" style="top:300px">You write this.</div>
+  <div class="abs center code" id="s1code" style="top:420px"><span id="s1txt"></span><span class="caret" id="caret"></span></div>
+  <div class="abs center cap" id="s1b" style="top:680px;font-size:52px">How does it become something a machine can run?</div>
+</section>
+
+<!-- S2 pipeline -->
+<section class="scene" id="s2">
+  <div class="abs center" id="s2a" style="top:190px;font-size:66px;font-weight:700">A compiler works in <span style="color:var(--run)">five phases</span></div>
+  <div class="abs" id="s2cards" style="left:110px;top:400px;width:1700px;height:260px"></div>
+  <div class="abs center capm" id="s2b" style="top:760px">This mini compiler is written in C, and it shows you every phase.</div>
+</section>
+
+<!-- S3 lexer -->
+<section class="scene" id="s3">
+  <div class="hdr" id="h3"><div class="num" style="color:var(--acc)">PHASE 01</div><div class="t">Lexical analysis</div><div class="s">Reads characters and groups them into <b style="color:var(--ink)">tokens</b>.</div></div>
+  <div class="abs code" id="s3code" style="left:0;right:0;top:420px;text-align:center;font-size:110px"></div>
+  <div class="abs" id="scan" style="top:410px;height:150px;width:6px;background:var(--acc);border-radius:3px"></div>
+  <div class="abs" id="s3toks" style="left:0;top:640px;width:1920px;height:160px"></div>
+  <div class="abs" id="s3ws" style="left:0;right:0;top:830px;text-align:center" ><span class="small">Spaces and comments are thrown away.</span></div>
+  <div class="abs" id="s3err" style="left:0;right:0;top:900px;text-align:center"><span class="small" style="margin-right:18px">It also catches</span><span class="pill2 bad mono">x = 10 @ 2</span><span class="pill2 bad mono">9abc</span><span class="pill2 bad mono">/* unclosed</span></div>
+</section>
+
+<!-- S4 parser -->
+<section class="scene" id="s4">
+  <div class="hdr" id="h4"><div class="num" style="color:var(--kw)">PHASE 02</div><div class="t">Syntax analysis</div><div class="s">Checks the grammar and builds a <b style="color:var(--ink)">syntax tree</b>.</div></div>
+  <div class="abs card" id="gram" style="left:120px;top:470px;width:760px;padding:34px 36px">
+    <div class="small" style="margin-bottom:18px">Recursive descent: one C function per rule</div>
+    <div class="mono" style="font-size:32px;line-height:1.8;white-space:pre"><span id="g1"><span class="kw">add</span> → mul { <span class="op">'+'</span> mul }</span>
+<span id="g2"><span class="kw">mul</span> → unary { <span class="op">'*'</span> unary }</span></div>
+  </div>
+  <div class="abs" id="s4note" style="left:120px;top:830px;width:760px;font-size:32px;line-height:1.4"><b style="color:var(--run)">*</b> is parsed one level deeper,<br>so it <b>binds tighter</b> than <b style="color:var(--run)">+</b>.</div>
+  <svg class="abs" id="tree" style="left:900px;top:250px" width="960" height="600" viewBox="0 0 960 600"></svg>
+</section>
+
+<!-- S5 semantic -->
+<section class="scene" id="s5">
+  <div class="hdr" id="h5"><div class="num" style="color:var(--ok)">PHASE 03</div><div class="t">Semantic analysis</div><div class="s">Does it make sense? Names, scopes and types.</div></div>
+  <div class="abs card" id="symc" style="left:120px;top:400px;padding:22px 10px">
+    <div class="small" style="padding:0 26px 10px">Symbol table</div>
+    <table class="sym" id="sym"><tr><th>Name</th><th>Type</th><th>Size</th><th>Offset</th><th>Scope</th></tr></table>
+  </div>
+  <div class="abs" id="sqnote" style="left:120px;top:900px;font-size:28px;color:var(--run)">↑ <b>sq</b> is declared inside the for loop, so it gets scope 1.</div>
+  <div class="abs card" id="tyc" style="left:1010px;top:400px;width:800px;padding:30px 36px">
+    <div class="small" style="margin-bottom:16px">Type checking</div>
+    <div class="mono" style="font-size:44px;white-space:pre">avg = <span id="ty1" class="hl">(a + b)</span> / <span id="ty2" class="hl">2.0</span>;</div>
+    <div class="mono" style="font-size:26px;white-space:pre;margin-top:8px;color:var(--mute)" id="tyl">        int         float</div>
+    <div id="tyr" style="margin-top:26px;font-size:30px">int / float → <b style="color:var(--run)">float</b>, so it inserts<br><span class="mono" style="color:var(--ok);font-size:34px">t12 = (float) t11</span></div>
+  </div>
+  <div class="abs" id="s5err" style="left:1010px;top:790px;width:820px">
+    <div class="small" style="margin-bottom:14px">and reports errors like</div>
+    <span class="pill2 bad" id="e1">undeclared variable</span><span class="pill2 bad" id="e2">redeclared in same scope</span>
+    <div style="height:14px"></div><span class="pill2 bad" id="e3">float stored in an int</span><span class="pill2 bad" id="e4">% on floats</span>
+  </div>
+</section>
+
+<!-- S6 intermediate code -->
+<section class="scene" id="s6">
+  <div class="hdr" id="h6"><div class="num" style="color:var(--run)">PHASE 04</div><div class="t">Intermediate code</div><div class="s">Flatten the tree: one operator per instruction.</div></div>
+  <svg class="abs" id="tree2" style="left:80px;top:410px" width="790" height="520" viewBox="0 0 960 630"></svg>
+  <div class="abs" id="tac" style="left:900px;top:410px;width:900px">
+    <div class="small" style="margin-bottom:10px">Three-address code</div>
+    <div class="tac tline" id="c1"><span class="op">t1</span> = a * 2</div>
+    <div class="tac tline" id="c2"><span class="op">t2</span> = <span class="op">t1</span> + 3</div>
+    <div class="tac tline" id="c3">b = <span class="op">t2</span></div>
+  </div>
+  <div class="abs card" id="quad" style="left:900px;top:700px;padding:16px 8px">
+    <table class="sym" style="font-size:28px"><tr><th>op</th><th>arg1</th><th>arg2</th><th>result</th></tr>
+    <tr><td>*</td><td>a</td><td>2</td><td>t1</td></tr><tr><td>+</td><td>t1</td><td>3</td><td>t2</td></tr><tr><td>=</td><td>t2</td><td></td><td>b</td></tr></table>
+  </div>
+  <div class="abs" id="ifc" style="left:1450px;top:700px;width:420px">
+    <div class="small" style="margin-bottom:12px">ifs and loops become jumps</div>
+    <div class="mono" style="font-size:30px;line-height:1.6;white-space:pre"><span style="color:var(--mute)">if (b > 10)</span>
+t3 = b > 10
+<span class="kw">ifFalse</span> t3 <span class="kw">goto</span> L1</div>
+  </div>
+</section>
+
+<!-- S7 optimizer -->
+<section class="scene" id="s7">
+  <div class="hdr" id="h7"><div class="num" style="color:var(--ok)">PHASE 05</div><div class="t">Optimizer</div><div class="s">Do the math now, so the program doesn't have to.</div></div>
+  <div class="abs" id="step" style="left:120px;top:420px;height:60px"></div>
+  <div class="abs card" id="optc" style="left:120px;top:510px;width:860px;padding:26px 40px">
+    <div class="tac tline" id="o0">a = 5</div>
+    <div class="tac tline" id="o1"></div>
+    <div class="tac tline" id="o2"></div>
+    <div class="tac tline" id="o3"></div>
+  </div>
+  <div class="abs" id="cnt" style="left:1120px;top:470px;width:700px">
+    <div class="small">On the full demo program</div>
+    <div style="font-size:150px;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums"><span style="color:var(--mute)">35</span> → <span id="cntn" style="color:var(--ok)">35</span></div>
+    <div style="font-size:34px;color:var(--mute)">instructions</div>
+    <div id="brf" style="font-size:30px;margin-top:40px;line-height:1.45"><b style="color:var(--run)">b > 10</b> is known at compile time,<br>so the <b>if</b> branch is decided too.</div>
+  </div>
+</section>
+
+<!-- S8 outro -->
+<section class="scene" id="s8">
+  <div class="abs" id="win" style="left:90px;top:150px;width:920px;height:800px;border-radius:16px;overflow:hidden;border:1.5px solid var(--line);background:var(--card);box-shadow:0 40px 120px rgba(0,0,0,.5)">
+    <div style="height:46px;display:flex;align-items:center;gap:10px;padding:0 18px;background:#232a36;border-bottom:1px solid var(--line)">
+      <i style="width:13px;height:13px;border-radius:50%;background:#ff7a59"></i><i style="width:13px;height:13px;border-radius:50%;background:#f5b942"></i><i style="width:13px;height:13px;border-radius:50%;background:#3ccf91"></i>
+      <span class="mono" style="margin-left:18px;font-size:17px;color:var(--mute)">report.html</span></div>
+    <div style="position:relative;height:754px;overflow:hidden"><iframe id="rep" src="report.html" style="position:absolute;left:0;top:0;width:1280px;height:12000px;border:0;transform-origin:0 0;transform:scale(.72)"></iframe></div>
+  </div>
+  <div class="abs" id="o8" style="left:1090px;top:250px;width:760px">
+    <div id="o8a" style="font-size:96px;font-weight:800;line-height:1.05">Mini Compiler</div>
+    <div id="o8b" style="font-size:44px;color:var(--mute);margin-top:18px">Five phases. Every one visualized.</div>
+    <div id="o8c" style="margin-top:56px;display:flex;flex-direction:column;gap:14px"></div>
+    <div id="o8d" style="margin-top:50px;font-size:30px;color:var(--mute)">Written in C · runs in your browser<br><span class="mono" style="color:var(--acc);font-size:34px">web.bat → localhost:8000</span></div>
+  </div>
+</section>
+
+<div id="bar"><h1>MINI COMPILER</h1><div id="pipe"><div id="pill"></div></div></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const P=(t,a,d)=>clamp((t-a)/d);
+const eo=x=>1-Math.pow(1-x,3);
+const eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const eb=x=>{const c1=1.6,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const lerp=(a,b,k)=>a+(b-a)*k;
+// show element: k in [0,1]; slide from y, scale from s
+function show(el,k,{x=0,y=34,s=1,blur=8,back=false}={}){
+  const e=back?eb(k):eo(k);
+  el.style.opacity=clamp(k*1.6);
+  el.style.transform=`translate(${x*(1-e)}px,${y*(1-e)}px) scale(${s+(1-s)*e})`;
+  el.style.filter=blur&&k<1?`blur(${blur*(1-eo(k))}px)`:'none';
+}
+const SC=[[0,5.5],[5.5,11],[11,20],[20,30],[30,39],[39,48],[48,56.5],[56.5,63]];
+const PH=["Lexer","Parser","Semantic","Intermediate code","Optimizer"];
+const PHC=["#8fa8ff","#b98af0","#3ccf91","#f5b942","#3ccf91"];
+const GLOW=["#3557d4","#c27c0e","#8fa8ff","#b98af0","#3ccf91","#f5b942","#12805c","#3557d4"];
+
+/* ---------- build ---------- */
+// S2 cards
+const IO=["chars → tokens","tokens → tree","tree → typed tree","tree → 3-address code","code → faster code"];
+PH.forEach((n,i)=>$("s2cards").insertAdjacentHTML("beforeend",
+  `<div class="pcard card" id="pc${i}" style="left:${i*350}px"><div class="n">0${i+1}</div><div class="nm">${n}</div><div class="io">${IO[i]}</div></div>`));
+// top bar chips
+PH.forEach((n,i)=>{ if(i)$("pipe").insertAdjacentHTML("beforeend",'<span class="arrow">→</span>');
+  $("pipe").insertAdjacentHTML("beforeend",`<span class="chip" id="ch${i}">${n}</span>`);});
+// S1 text
+const S1="b = a * 2 + 3;";
+// S3 lexemes
+const LEX=[["b","IDENTIFIER","id"],["=","OPERATOR","op"],["a","IDENTIFIER","id"],["*","OPERATOR","op"],["2","INT_CONST","num"],["+","OPERATOR","op"],["3","INT_CONST","num"],[";","SEPARATOR","sep"]];
+const COL={id:"#8fa8ff",op:"#f5b942",num:"#3ccf91",sep:"#98a2b3",kw:"#b98af0"};
+$("s3code").innerHTML=LEX.map((l,i)=>`<span id="lx${i}" class="hl">${l[0]}</span>`).join(" ");
+LEX.forEach((l,i)=>$("s3toks").insertAdjacentHTML("beforeend",
+  `<div class="tok card" id="tk${i}" style="left:${144+i*210}px;border-color:${COL[l[2]]}55"><div class="lx" style="color:${COL[l[2]]}">${l[0]}</div><div class="cat">${l[1]}</div></div>`));
+// trees
+const NODES=[["Assign",440,50,"kw",0],["Id b",180,190,"id",1],["BinOp +",680,190,"op",1],["BinOp *",500,340,"op",2],["Num 3",840,340,"num",2],["Id a",360,490,"id",3],["Num 2",640,490,"num",3]];
+const EDGES=[[0,1],[0,2],[2,3],[2,4],[3,5],[3,6]];
+function buildTree(svg,pre){
+  let h=`<g id="${pre}hi"><rect x="236" y="290" width="490" height="250" rx="26" fill="#f5b942" opacity=".0"/></g>`;
+  EDGES.forEach(([a,b],i)=>{const A=NODES[a],B=NODES[b];const L=Math.hypot(B[1]-A[1],B[2]-A[2]);
+    h+=`<line id="${pre}e${i}" x1="${A[1]}" y1="${A[2]+30}" x2="${B[1]}" y2="${B[2]-30}" stroke="#3a4354" stroke-width="4" stroke-dasharray="${L}" stroke-dashoffset="${L}"/>`;});
+  NODES.forEach(([t,x,y,c],i)=>{h+=`<g id="${pre}n${i}" transform="translate(${x},${y})"><rect x="-100" y="-34" width="200" height="68" rx="16" fill="#1b2029" stroke="${COL[c]}" stroke-width="3"/><text text-anchor="middle" y="11" font-size="30" font-weight="700" fill="${COL[c]}">${t}</text></g>`;});
+  svg.innerHTML=h;
+}
+buildTree($("tree"),"a");buildTree($("tree2"),"b");
+// symbol table (real output for demo.mc)
+[["a","int",4,0,0],["b","int",4,4,0],["c","int",4,8,0],["i","int",4,12,0],["avg","float",4,16,0],["sq","int",4,20,1]]
+ .forEach((r,i)=>$("sym").insertAdjacentHTML("beforeend",`<tr id="sr${i}">${r.map((v,j)=>`<td style="${j==0?'color:var(--acc);font-weight:700':j==1?'color:'+(v=='float'?'var(--run)':'var(--kw)'):''}">${v}</td>`).join("")}</tr>`));
+// S8 chips
+PH.forEach((n,i)=>$("o8c").insertAdjacentHTML("beforeend",`<div id="oc${i}" style="font-size:32px;display:flex;align-items:center;gap:16px"><span style="display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#143428;color:var(--ok);font-weight:800;font-size:26px">✓</span>${n}</div>`));
+
+let chipRects=null;
+function measure(){const base=$("pipe").getBoundingClientRect();
+  chipRects=PH.map((_,i)=>{const r=$("ch"+i).getBoundingClientRect();return [r.left-base.left,r.width];});}
+
+/* ---------- render ---------- */
+function sceneEnv(i,t){const [a,b]=SC[i];
+  const el=$("s"+(i+1)); if(t<a-0.01||t>b+0.01){el.style.opacity=0;el.style.visibility="hidden";return null;}
+  el.style.visibility="visible";
+  const out=i==SC.length-1?0:P(t,b-0.45,0.45);
+  el.style.opacity=1-eio(out);
+  el.style.transform=`translateY(${-50*eio(out)}px) scale(${1-0.03*eio(out)})`;
+  el.style.filter=out>0?`blur(${10*out}px)`:'none';
+  return t-a;
+}
+function render(t){
+  // background camera drift + glow colour per scene
+  $("bg").style.transform=`translate(${-t*6%44}px,${-t*3.5%44}px)`;
+  let si=SC.findIndex(([a,b])=>t>=a&&t<b); if(si<0)si=SC.length-1;
+  const g=$("glow"); g.style.background=`radial-gradient(circle,${GLOW[si]},transparent 65%)`;
+  g.style.left=(760+260*Math.sin(t*0.23))+"px"; g.style.top=(-300+140*Math.cos(t*0.19))+"px";
+  g.style.opacity=.2+.06*Math.sin(t*1.3);
+
+  // S1
+  let l=sceneEnv(0,t);
+  if(l!==null){
+    show($("s1a"),P(l,0.15,0.6));
+    const n=Math.floor(clamp((l-0.45)/0.1,0,S1.length));
+    $("s1txt").innerHTML=[...S1.slice(0,n)].map(c=>{const k=/[a-z]/.test(c)?"id":/[=*+]/.test(c)?"op":/\d/.test(c)?"num":"";return k?`<span class="${k}">${c}</span>`:c;}).join("");
+    $("caret").style.opacity=(l<1.9||Math.floor(l*2.2)%2==0)?1:0;
+    show($("s1code"),P(l,0.2,0.5),{y:20,blur:0});
+    show($("s1b"),P(l,2.2,0.7));
+  }
+  // S2
+  l=sceneEnv(1,t);
+  if(l!==null){
+    show($("s2a"),P(l,0.2,0.6));
+    for(let i=0;i<5;i++){const c=$("pc"+i);show(c,P(l,0.8+0.35*i,0.55),{y:60,s:.85,back:true});
+      const on=P(l,3.2+0.3*i,0.3);c.style.borderColor=on>0?`rgba(60,207,145,${on})`:"";
+      c.querySelector(".nm").style.color=on>0.5?"var(--ok)":"";}
+    show($("s2b"),P(l,3.0,0.6));
+  }
+  // top bar 11..56.5
+  const barK=P(t,10.9,0.5)*(1-P(t,56.1,0.4));
+  show($("bar"),barK,{y:-40,blur:0});
+  if(barK>0){ if(!chipRects)measure();
+    // pill moves phase to phase: scene 2..6 -> phase 0..4
+    const starts=[11,20,30,39,48];let pos=0;
+    for(let k=1;k<5;k++)pos+=eio(P(t,starts[k]-0.35,0.6));
+    const a=Math.floor(Math.min(pos,4)),f=pos-a,b=Math.min(a+1,4);
+    const pl=$("pill");pl.style.left=lerp(chipRects[a][0],chipRects[b][0],f)+"px";pl.style.width=lerp(chipRects[a][1],chipRects[b][1],f)+"px";
+    pl.style.background=PHC[Math.round(pos)];
+    for(let k=0;k<5;k++){const c=$("ch"+k);const act=Math.round(pos)==k;c.className="chip"+(act?" run":k<pos?" ok":"");}
+  }
+  // S3 lexer
+  l=sceneEnv(2,t);
+  if(l!==null){
+    show($("h3"),P(l,0.2,0.6),{x:-40,y:0});
+    show($("s3code"),P(l,0.5,0.5),{y:20,blur:0});
+    if(!window._lx){window._lx=LEX.map((_,i)=>{const r=$("lx"+i).getBoundingClientRect();return [r.left,r.right];});}
+    const x0=window._lx[0][0]-30,x1=window._lx[7][1]+30,sp=P(l,1.3,2.4),sx=lerp(x0,x1,sp);
+    const scan=$("scan");scan.style.left=sx+"px";scan.style.opacity=(sp>0&&sp<1)?1:0;
+    LEX.forEach((lx,i)=>{const hit=sx>window._lx[i][1]&&sp>0;const k=hit?P(l,1.3+2.4*((window._lx[i][1]-x0)/(x1-x0)),0.4):0;
+      const s=$("lx"+i);s.style.color=k>0?COL[lx[2]]:"var(--ink)";s.style.background=k>0?COL[lx[2]]+"22":"transparent";
+      show($("tk"+i),k,{y:-70,s:.7,back:true,blur:4});});
+    show($("s3ws"),P(l,4.4,0.6));show($("s3err"),P(l,5.4,0.6));
+  }
+  // S4 parser
+  l=sceneEnv(3,t);
+  if(l!==null){
+    show($("h4"),P(l,0.2,0.6),{x:-40,y:0});
+    const lvl=[0.9,1.6,2.3,3.0];
+    NODES.forEach((n,i)=>{const k=P(l,lvl[n[4]],0.5),g=$("an"+i);
+      g.style.opacity=clamp(k*1.6);g.style.transform=`translate(${n[1]}px,${n[2]}px) scale(${.5+.5*eb(k)})`;});
+    EDGES.forEach(([a,b],i)=>{const e=$("ae"+i),L=+e.getAttribute("stroke-dasharray");e.style.strokeDashoffset=L*(1-eo(P(l,lvl[NODES[b][4]]-0.25,0.45)));});
+    show($("gram"),P(l,3.9,0.6),{x:-40,y:0});
+    const hk=P(l,5.6,0.6)*(1-P(l,9.2,0.3));
+    $("ahi").firstChild.setAttribute("opacity",(.16*eo(hk)).toFixed(3));
+    $("g2").style.background=`rgba(245,185,66,${.18*hk})`;
+    show($("s4note"),P(l,5.8,0.6));
+  }
+  // S5 semantic
+  l=sceneEnv(4,t);
+  if(l!==null){
+    show($("h5"),P(l,0.2,0.6),{x:-40,y:0});
+    show($("symc"),P(l,0.6,0.6),{y:40});
+    for(let i=0;i<6;i++)show($("sr"+i),P(l,0.9+0.25*i,0.4),{x:-30,y:0,blur:0});
+    const sq=P(l,3.0,0.4);$("sr5").style.background=`rgba(245,185,66,${.16*sq})`;
+    show($("sqnote"),P(l,3.1,0.5),{y:16});
+    show($("tyc"),P(l,4.0,0.6),{x:40,y:0});
+    const t1=P(l,4.7,0.4),t2=P(l,5.0,0.4);
+    $("ty1").style.background=`rgba(185,138,240,${.22*t1})`;$("ty2").style.background=`rgba(245,185,66,${.22*t2})`;
+    $("tyl").style.opacity=t2;show($("tyr"),P(l,5.5,0.5),{y:16});
+    show($("s5err"),P(l,6.4,0.4),{y:16,blur:0});
+    for(let i=1;i<=4;i++)show($("e"+i),P(l,6.5+0.18*i,0.4),{y:20,s:.8,back:true,blur:0});
+  }
+  // S6 intermediate code
+  l=sceneEnv(5,t);
+  if(l!==null){
+    show($("h6"),P(l,0.2,0.6),{x:-40,y:0});
+    const tk=P(l,0.4,0.6);$("tree2").style.opacity=tk;
+    // nodes collapse bottom-up as each line is emitted
+    const em=[1.4,2.4,3.4]; // * , + , assign
+    const grp=[[3,5,6],[2,4],[0,1]];
+    NODES.forEach((n,i)=>{const g=$("bn"+i);let st=-1;grp.forEach((G,j)=>{if(G.includes(i))st=j;});
+      const hi=P(l,em[st]-0.5,0.3),done=P(l,em[st],0.4);
+      g.style.transform=`translate(${n[1]}px,${n[2]}px) scale(${1+.08*hi*(1-done)})`;g.style.opacity=1-.75*done;});
+    EDGES.forEach((_,i)=>{const e=$("be"+i);e.style.strokeDashoffset=0;e.style.opacity=1-.75*P(l,em[i<2?2:i<4?1:0],0.4);});
+    for(let i=0;i<3;i++)show($("c"+(i+1)),P(l,em[i],0.5),{x:-60,y:0});
+    show($("tac").firstElementChild,P(l,1.0,0.5),{y:10,blur:0});
+    show($("quad"),P(l,4.4,0.6),{y:30});show($("ifc"),P(l,5.8,0.6),{y:30});
+  }
+  // S7 optimizer
+  l=sceneEnv(6,t);
+  if(l!==null){
+    show($("h7"),P(l,0.2,0.6),{x:-40,y:0});show($("optc"),P(l,0.6,0.6),{y:40});
+    const H=(s,c)=>`<span class="hl" style="background:${c}33;color:${c}">${s}</span>`;
+    const A="#f5b942",F="#3ccf91";
+    let o1="t1 = a * 2",o2="t2 = t1 + 3",o3="b = t2";
+    if(l>1.2)o1=`t1 = ${H("5",A)} * 2`; if(l>2.2)o1=`t1 = ${H("10",F)}`;
+    if(l>2.9)o2=`t2 = ${H("10",A)} + 3`; if(l>3.5)o2=`t2 = ${H("13",F)}`;
+    if(l>4.1)o3=`b = ${H("13",A)}`;
+    $("o1").innerHTML=o1;$("o2").innerHTML=o2;$("o3").innerHTML=o3;
+    const dk=eio(P(l,4.9,0.6));
+    ["o1","o2"].forEach(id=>{const e=$(id);e.style.height=(72*(1-dk))+"px";e.style.opacity=1-dk;e.style.textDecoration=l>4.6?"line-through":"none";});
+    const steps=[[1.0,"Constant propagation",A],[2.0,"Constant folding",F],[4.55,"Dead temporary removal","#ff7a59"],[5.7,"Result: 2 instructions, not 4","#8fa8ff"]];
+    let cur=null;steps.forEach(s=>{if(l>=s[0])cur=s;});
+    const st=$("step");
+    if(cur){const k=P(l,cur[0],0.35);st.innerHTML=`<span class="pill2" style="font-size:30px;font-weight:600;background:${cur[2]}22;color:${cur[2]};border:1.5px solid ${cur[2]}66">${cur[1]}</span>`;show(st,k,{y:14,blur:0});}else st.style.opacity=0;
+    show($("cnt"),P(l,5.4,0.6),{x:40,y:0});
+    $("cntn").textContent=35-Math.round(5*eo(P(l,5.8,1.0)));
+    show($("brf"),P(l,6.6,0.6),{y:16});
+  }
+  // S8 outro
+  l=sceneEnv(7,t);
+  if(l!==null){
+    show($("win"),P(l,0.1,0.8),{y:80,s:.92});
+    const R=window.REPO||[0,0],y=lerp(0,R[0],eio(P(l,1.9,1.0)))+(R[1]-R[0])*eio(P(l,3.9,1.0));
+    $("rep").style.transform=`translateY(${-y*.72+(y?16:0)}px) scale(.72)`;
+    show($("o8a"),P(l,0.4,0.7),{x:50,y:0});show($("o8b"),P(l,0.9,0.6),{x:50,y:0});
+    for(let i=0;i<5;i++)show($("oc"+i),P(l,1.6+0.2*i,0.4),{x:30,y:0,blur:0,back:true});
+    show($("o8d"),P(l,3.0,0.6));
+    const fade=P(l,5.9,0.6);$("stage").style.opacity=1-fade;
+  } else $("stage").style.opacity=1;
+}
+window.render=render;
+window.ready=Promise.all([document.fonts.ready,new Promise(r=>{const f=$("rep");if(f.contentDocument&&f.contentDocument.readyState=="complete")r();else f.onload=r;})]);
+render(+(location.hash.slice(1)||0));
+</script>
+</body></html>
